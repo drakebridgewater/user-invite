@@ -383,6 +383,18 @@ def join_page(row, error="", form=None):
     return page(f"Join {SITE_NAME}", body, narrow=True)
 
 
+def forbidden_page():
+    """Body for Traefik's `errors` middleware: replaces 403 pages on other sites."""
+    e = html.escape
+    logout = f"{LOGIN_URL}/logout?rd={quote(LOGIN_URL + '/', safe='')}"
+    body = (f'<h1>You don\'t have access to this page</h1><div class="card">'
+            f'<p>Your account isn\'t allowed to use this part of {e(SITE_NAME)}. '
+            'If you think it should be, ask the person who manages your account.</p>'
+            f'<a class="btn" href="{e(HOME_URL)}">Go to {e(urlsplit(HOME_URL).netloc)}</a>'
+            f'<p style="margin-top:18px"><a href="{e(logout)}">Sign in as someone else</a></p></div>')
+    return page("Access denied", body, narrow=True)
+
+
 def message_page(title, text, ok=True):
     body = (f'<h1>{html.escape(title)}</h1><div class="card"><div class="msg {"ok" if ok else "err"}">'
             f'{text}</div></div>')
@@ -430,8 +442,7 @@ class Handler(BaseHTTPRequestHandler):
         groups = [g.strip() for g in self.headers.get("Remote-Groups", "").split(",")]
         if user and ADMIN_GROUP in groups:
             return user
-        self.send(403, message_page("Not allowed", f"You need to be in the <b>{html.escape(ADMIN_GROUP)}</b> "
-                                    "group to send invites.", ok=False))
+        self.send(403, forbidden_page())
         return None
 
     def do_GET(self):
@@ -439,6 +450,8 @@ class Handler(BaseHTTPRequestHandler):
             path = urlsplit(self.path).path
             if path == "/healthz":
                 return self.send(200, "ok", "text/plain")
+            if path == "/error/403":
+                return self.send(200, forbidden_page())
             if path in ("/", "/admin", "/admin/"):
                 user = self.admin()
                 if user:
@@ -453,6 +466,8 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         try:
             path = urlsplit(self.path).path
+            if path == "/error/403":
+                return self.send(200, forbidden_page())
             if not self.same_origin():
                 return self.send(403, message_page("Not allowed", "Cross-site request blocked.", ok=False))
             if path.startswith("/join/"):
