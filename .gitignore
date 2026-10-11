@@ -1,0 +1,9 @@
+# runtime data and secrets
+data/
+*.env
+*password*.txt
+compose-snippet.yaml
+# vendored deps (only used when running on the stock python image; see README)
+app/vendor/
+__pycache__/
+*.pyc

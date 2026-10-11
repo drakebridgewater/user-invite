@@ -1,0 +1,35 @@
+services:
+  user-invites:
+    build: .
+    container_name: user-invites
+    restart: unless-stopped
+    volumes:
+      - ./data:/data
+    env_file:
+      - user-invites.env          # LLDAP_PASSWORD, SMTP_USER, SMTP_PASSWORD, SMTP_FROM
+    environment:
+      - PUBLIC_URL=https://invite.example.com
+      - LOGIN_URL=https://auth.example.com
+      - HOME_URL=https://home.example.com/
+      - SITE_NAME=example.com
+      - ADMIN_GROUP=invite-users
+      - LLDAP_URL=http://lldap:17170
+      - LLDAP_LDAP_URL=ldap://lldap:3890
+      - LLDAP_BASE_DN=dc=example,dc=com
+      - LLDAP_USER=invite-svc
+      - SMTP_HOST=smtp.example.com
+      - SMTP_PORT=587
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.user-invites.rule=Host(`invite.example.com`)"
+      - "traefik.http.routers.user-invites.entryPoints=https"
+      - "traefik.http.routers.user-invites.tls=true"
+      # forward-auth middleware that sets Remote-User / Remote-Groups / Remote-Name / Remote-Email
+      - "traefik.http.routers.user-invites.middlewares=authelia@docker"
+      - "traefik.http.services.user-invites.loadbalancer.server.port=8080"
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true
