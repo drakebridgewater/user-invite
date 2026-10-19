@@ -65,7 +65,7 @@ Put these before any wildcard catch-all rule. The app also checks `Remote-Groups
 | `SMTP_USER` / `SMTP_PASSWORD` | yes | | |
 | `SMTP_FROM` | yes | | e.g. `example.com <accounts@example.com>` |
 | `SIGNATURE` | no | `teal` | Signature hue: `teal`, `green`, `purple`, `amber`, `orange` or `pink` |
-| `PROMPT_HOST` | no | `eopsin` | Host shown in the header's `user@host:~/path` line |
+| `PROMPT_HOST` | no | `omega` | Host shown in the header's `user@host:~/path` line |
 | `DB_PATH` | no | `/data/invites.db` | SQLite file holding invites |
 | `PORT_HTTP` | no | `8080` | |
 
