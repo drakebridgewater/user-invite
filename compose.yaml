@@ -24,7 +24,8 @@ services:
       SITE_NAME: ${SITE_NAME:-}
       ADMIN_GROUP: ${ADMIN_GROUP:-invite-users}
       SIGNATURE: ${SIGNATURE:-teal}
-      PROMPT_HOST: ${PROMPT_HOST:-eopsin}
+      APP_NAME: ${APP_NAME:-invites}
+      APPS_URL: ${APPS_URL:-}
       LLDAP_URL: ${LLDAP_URL:-http://lldap:17170}
       LLDAP_LDAP_URL: ${LLDAP_LDAP_URL:-ldap://lldap:3890}
       LLDAP_BASE_DN: ${LLDAP_BASE_DN:?set LLDAP_BASE_DN}
@@ -33,6 +34,9 @@ services:
       SMTP_PORT: ${SMTP_PORT:-587}
     volumes:
       - ${INVITES_DATA:-./data}:/data
+      # Optional: a checkout of the bridgewater.digital style repo, pinned to a release.
+      # Without it (an empty folder), pages use plain styling.
+      - ${STYLE_PATH:-./style}:/style:ro
     # No published port: the app trusts the Remote-* headers, so only the proxy may reach it.
     networks:
       - proxy

@@ -29,13 +29,13 @@ It's one Python file using the standard library plus [`ldap3`](https://pypi.org/
 
 ### Authelia access control
 
-`/join/` (and the web fonts it loads) must be reachable without logging in; everything else is admin-only:
+`/join/` (and the style files it loads from `/static/brand/`) must be reachable without logging in; everything else is admin-only:
 
 ```yaml
 access_control:
   rules:
     - domain: "invite.example.com"
-      resources: ["^/join/.*$", "^/static/fonts/.*$"]
+      resources: ["^/join/.*$", "^/static/brand/.*$"]
       policy: "bypass"
     - domain: "invite.example.com"
       subject: "group:invite-users"
@@ -64,8 +64,10 @@ Put these before any wildcard catch-all rule. The app also checks `Remote-Groups
 | `SMTP_PORT` | no | `587` | 587 = STARTTLS, 465 = implicit TLS |
 | `SMTP_USER` / `SMTP_PASSWORD` | yes | | |
 | `SMTP_FROM` | yes | | e.g. `example.com <accounts@example.com>` |
+| `STYLE_DIR` | no | `/style` | Checkout of the style repo inside the container (see Look); compose mounts `STYLE_PATH` there |
 | `SIGNATURE` | no | `teal` | Signature hue: `teal`, `green`, `purple`, `amber`, `orange` or `pink` |
-| `PROMPT_HOST` | no | `omega` | Host shown in the header's `user@host:~/path` line |
+| `APP_NAME` | no | `invites` | Short name in the header's `user@app:~/path` line |
+| `APPS_URL` | no | | Apps list for the header's launcher (e.g. a family hub's `/api/apps`); empty hides it |
 | `DB_PATH` | no | `/data/invites.db` | SQLite file holding invites |
 | `PORT_HTTP` | no | `8080` | |
 
@@ -96,16 +98,22 @@ then mount `./app` at `/app` and run `python -u /app/app.py`.
 
 ## Look
 
-Pages and emails follow the bridgewater.digital design system: Fira Sans and Fira Code, the signature strip,
-wordmark and `user@host:~/path` prompt line, hairline-separated layout, and light and dark themes (system
-preference by default, with a toggle that remembers your choice).
+The pages work on their own with plain styling. With the [bridgewater.digital](https://bridgewater.digital) style
+mounted they use it: its stylesheet, fonts and favicon, its `Header` (wordmark, account menu, apps launcher, theme
+toggle and the `user@app:~/path` prompt line), the list and focus layouts, and its confirm dialog before revoking.
+Invite emails take their colors from the style's `tokens.json`.
 
-- `app/static/bridgewater.css` holds the design-system tokens and component styles. It's generated; to
-  update it, export `tokens.json` and `components/bundle.css` from the design system and run
-  `python scripts/build_brand_css.py tokens.json bundle.css app/static/bridgewater.css`.
-- CSS is inlined into every page so the 403 page also works when Traefik serves it on other sites.
-  Fonts are self-hosted under `app/static/fonts` (SIL Open Font License, see the `LICENSE-*.txt` files there)
-  and loaded from `PUBLIC_URL`. If they can't load, pages fall back to system fonts.
+The style lives in a separate, private repo, so none of it is in this one. Point `STYLE_PATH` at a checkout of it,
+pinned to a release:
+
+```sh
+git clone git@github.com:drakebridgewater/style.bridgewater.git
+git -C style.bridgewater checkout v1.0.0
+```
+
+The app reads it at startup and serves `components/bridgewater.css`, `components/bundle.js`, the fonts and the
+favicon under `/static/brand/`, with absolute URLs so the 403 page also works when Traefik serves it on other sites.
+To take a new release, check out its tag and restart the container.
 
 ## Notes
 

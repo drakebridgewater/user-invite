@@ -7,3 +7,4 @@ compose-snippet.yaml
 app/vendor/
 __pycache__/
 *.pyc
+style/
