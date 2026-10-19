@@ -1,0 +1,8 @@
+# keep secrets, runtime data and local-only files out of the build context
+.git
+data/
+*.env
+*password*.txt
+compose-snippet.yaml
+app/vendor/
+**/__pycache__

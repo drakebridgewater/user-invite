@@ -29,13 +29,13 @@ It's one Python file using the standard library plus [`ldap3`](https://pypi.org/
 
 ### Authelia access control
 
-`/join/` must be reachable without logging in; everything else is admin-only:
+`/join/` (and the web fonts it loads) must be reachable without logging in; everything else is admin-only:
 
 ```yaml
 access_control:
   rules:
     - domain: "invite.example.com"
-      resources: ["^/join/.*$"]
+      resources: ["^/join/.*$", "^/static/fonts/.*$"]
       policy: "bypass"
     - domain: "invite.example.com"
       subject: "group:invite-users"
@@ -64,6 +64,8 @@ Put these before any wildcard catch-all rule. The app also checks `Remote-Groups
 | `SMTP_PORT` | no | `587` | 587 = STARTTLS, 465 = implicit TLS |
 | `SMTP_USER` / `SMTP_PASSWORD` | yes | | |
 | `SMTP_FROM` | yes | | e.g. `example.com <accounts@example.com>` |
+| `SIGNATURE` | no | `teal` | Signature hue: `teal`, `green`, `purple`, `amber`, `orange` or `pink` |
+| `PROMPT_HOST` | no | `eopsin` | Host shown in the header's `user@host:~/path` line |
 | `DB_PATH` | no | `/data/invites.db` | SQLite file holding invites |
 | `PORT_HTTP` | no | `8080` | |
 
@@ -84,6 +86,19 @@ docker run --rm -v "$PWD/app:/out" python:3.13-alpine pip install --target /out/
 ```
 
 then mount `./app` at `/app` and run `python -u /app/app.py`.
+
+## Look
+
+Pages and emails follow the bridgewater.digital design system: Fira Sans and Fira Code, the signature strip,
+wordmark and `user@host:~/path` prompt line, hairline-separated layout, and light and dark themes (system
+preference by default, with a toggle that remembers your choice).
+
+- `app/static/bridgewater.css` holds the design-system tokens and component styles. It's generated; to
+  update it, export `tokens.json` and `components/bundle.css` from the design system and run
+  `python scripts/build_brand_css.py tokens.json bundle.css app/static/bridgewater.css`.
+- CSS is inlined into every page so the 403 page also works when Traefik serves it on other sites.
+  Fonts are self-hosted under `app/static/fonts` (SIL Open Font License, see the `LICENSE-*.txt` files there)
+  and loaded from `PUBLIC_URL`. If they can't load, pages fall back to system fonts.
 
 ## Notes
 
