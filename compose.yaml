@@ -1,0 +1,57 @@
+# user-invites: invitation links for lldap + Authelia.
+#
+# Settings come from variables: a .env file next to this one (see .env.example)
+# or your deploy tool's stack variables. Secrets go in user-invites.env, also
+# next to this file, so they never need to be typed into a UI:
+#   LLDAP_PASSWORD, SMTP_USER, SMTP_PASSWORD, SMTP_FROM
+
+name: user-invites
+
+services:
+  user-invites:
+    container_name: user-invites
+    image: user-invites:latest
+    build: .
+    restart: unless-stopped
+    user: "${PUID:-1000}:${PGID:-1000}"
+    env_file:
+      - path: user-invites.env
+        required: false
+    environment:
+      PUBLIC_URL: https://${INVITE_HOST:?set INVITE_HOST}
+      LOGIN_URL: ${LOGIN_URL:?set LOGIN_URL}
+      HOME_URL: ${HOME_URL:-}
+      SITE_NAME: ${SITE_NAME:-}
+      ADMIN_GROUP: ${ADMIN_GROUP:-invite-users}
+      SIGNATURE: ${SIGNATURE:-teal}
+      PROMPT_HOST: ${PROMPT_HOST:-eopsin}
+      LLDAP_URL: ${LLDAP_URL:-http://lldap:17170}
+      LLDAP_LDAP_URL: ${LLDAP_LDAP_URL:-ldap://lldap:3890}
+      LLDAP_BASE_DN: ${LLDAP_BASE_DN:?set LLDAP_BASE_DN}
+      LLDAP_USER: ${LLDAP_USER:-invite-svc}
+      SMTP_HOST: ${SMTP_HOST:?set SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT:-587}
+    volumes:
+      - ${INVITES_DATA:-./data}:/data
+    # No published port: the app trusts the Remote-* headers, so only the proxy may reach it.
+    networks:
+      - proxy
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${TRAEFIK_NETWORK:-proxy}
+      traefik.http.routers.user-invites.rule: Host(`${INVITE_HOST}`)
+      traefik.http.routers.user-invites.entrypoints: ${TRAEFIK_ENTRYPOINT:-https}
+      traefik.http.routers.user-invites.tls: "true"
+      # Must include forward-auth that sets Remote-User / Remote-Groups / Remote-Name / Remote-Email.
+      traefik.http.routers.user-invites.middlewares: ${TRAEFIK_MIDDLEWARES:-authelia@docker}
+      traefik.http.services.user-invites.loadbalancer.server.port: "8080"
+      homepage.group: ${HOMEPAGE_GROUP:-Authentication}
+      homepage.name: Invites
+      homepage.icon: mdi-email-plus
+      homepage.description: Invite new users
+      homepage.href: https://${INVITE_HOST}/admin
+
+networks:
+  proxy:
+    name: ${TRAEFIK_NETWORK:-proxy}
+    external: true

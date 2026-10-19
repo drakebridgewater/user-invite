@@ -69,15 +69,22 @@ Put these before any wildcard catch-all rule. The app also checks `Remote-Groups
 | `DB_PATH` | no | `/data/invites.db` | SQLite file holding invites |
 | `PORT_HTTP` | no | `8080` | |
 
-Keep the secrets in an env file (see `compose.example.yaml`).
+Empty values count as unset. Keep the secrets (`LLDAP_PASSWORD`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`) in
+`user-invites.env` next to `compose.yaml`; it's gitignored and loaded if present.
 
 ## Running
 
-With the included Dockerfile:
+`compose.yaml` builds the image from this repo and reads its settings from variables. Copy `.env.example`
+to `.env`, fill it in, put the secrets in `user-invites.env`, then:
 
 ```sh
-docker compose -f compose.example.yaml up -d --build
+docker compose up -d --build
 ```
+
+The compose file sets `PUBLIC_URL` from `INVITE_HOST`, joins the external `proxy` network and adds Traefik
+labels; `TRAEFIK_MIDDLEWARES` must include your Authelia forward-auth middleware. It also works as a git-backed
+stack in tools like Dockhand or Portainer: set the variables in the stack and drop `user-invites.env` into the
+stack folder.
 
 Or without building an image, on the stock `python:3.13-alpine` image with `ldap3` vendored next to the app:
 

@@ -30,7 +30,8 @@ import ldap3  # noqa: E402
 
 
 def env(name, default=None):
-    value = os.environ.get(name, default)
+    # Empty counts as unset, so compose can pass optional settings through as ${VAR:-}.
+    value = os.environ.get(name) or default
     if value is None:
         sys.exit(f"missing required environment variable {name}")
     return value
